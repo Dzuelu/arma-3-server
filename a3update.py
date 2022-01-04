@@ -183,7 +183,7 @@ def load_mods(): # Loads both local and workshop mods
 def create_hard_links_for_files(real_folder: str, link_folder: str, recursive = True):
     for real_file_name in os.listdir(real_folder):
         real_item_path = os.path.join(real_folder, real_file_name)
-        link_item_path = os.path.join(link_folder, real_file_name).lower()
+        link_item_path = os.path.join(link_folder, real_file_name)
         if os.path.isdir(real_item_path) and recursive:
             create_hard_links_for_files(real_item_path, link_item_path)
         if os.path.isfile(real_item_path):
