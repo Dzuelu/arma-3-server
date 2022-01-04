@@ -136,6 +136,8 @@ def check_workshop_mod(mod_id):
         lowercase_workshop_dir(path)
     else:
         print("No update required for \"{}\" ({})... SKIPPING".format(mod_name, mod_id))
+    # Copy keys here so it's easier to see the mod that has missing keys
+    copy_mod_keys(path)
 
 
 def load_workshop_mods():
@@ -155,20 +157,21 @@ def load_workshop_mods():
             check_workshop_mod(mod_id)
 
 
-def load_mods_from_dir(directory): # Loads both local and workshop mods
+def load_mods_from_dir(directory, copyKeys): # Loads both local and workshop mods
     for mod_folder_name in os.listdir(directory):
         mod_folder = os.path.join(directory, mod_folder_name)
         if os.path.isdir(mod_folder):
             debug("Found mod \"{}\"".format(mod_folder_name))
             MODS.append(mod_folder)
-            copy_mod_keys(mod_folder)
+            if copyKeys:
+                copy_mod_keys(mod_folder)
 
 
 def load_mods(): # Loads both local and workshop mods
     debug('Loading Workshop mods:')
-    load_mods_from_dir(A3_WORKSHOP_MODS_DIR)
+    load_mods_from_dir(A3_WORKSHOP_MODS_DIR, False)
     debug('Loading Local mods:')
-    load_mods_from_dir(A3_LOCAL_MODS_DIR)
+    load_mods_from_dir(A3_LOCAL_MODS_DIR, True)
 
 
 def create_hard_links_for_files(real_folder, link_folder, recursive = True):
