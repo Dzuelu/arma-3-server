@@ -105,6 +105,10 @@ def download_workshop_mod(mod_id):
     call_steamcmd(steam_cmd_params)
 
 
+def lowercase_workshop_dir(path):
+    os.system("(cd {} && find . -depth -exec rename -v 's/(.*)\/([^\/]*)/$1\/\L$2/' {{}} \;)".format(path))
+
+
 def check_workshop_mod(mod_id):
     response = request.urlopen("{}/{}".format(WORKSHOP_CHANGELOG_URL, mod_id)).read().decode("utf-8")
     mod_name = MOD_NAME_REGEX.search(response).group(1)
@@ -124,6 +128,7 @@ def check_workshop_mod(mod_id):
         print("No update required for \"{}\" ({})... SKIPPING".format(mod_name, mod_id))
     
     copy_mod_keys(path)
+    lowercase_workshop_dir(path)
     WORKSHOP_MODS[mod_name] = mod_id
 
 
@@ -153,13 +158,9 @@ def load_local_mods(): # Should be called before create_mod_symlinks
             copy_mod_keys(local_mod_path)
 
 
-def lowercase_workshop_dir():
-    os.system("(cd {} && find . -depth -exec rename -v 's/(.*)\/([^\/]*)/$1\/\L$2/' {{}} \;)".format(A3_WORKSHOP_DIR))
-
-
 def create_mod_symlinks():
     for mod_name, mod_id in WORKSHOP_MODS.items():
-        link_path = "{}/{}".format(A3_MODS_DIR, mod_name)
+        link_path = "{}/@{}".format(A3_MODS_DIR, mod_name)
         real_path = "{}/{}".format(A3_WORKSHOP_DIR, mod_id)
 
         if os.path.isdir(real_path):
@@ -178,11 +179,8 @@ log("Loading and updating workshop mods...")
 load_workshop_mods()
 print("Workshop mods loaded", WORKSHOP_MODS)
 
-log("Converting workshop uppercase files/folders to lowercase...")
-lowercase_workshop_dir()
-
 log("Adding local/server mods...")
-load_local_mods() # Should be called before create_mod_symlinks
+load_local_mods()
 
 log("Creating workshop symlinks...")
 create_mod_symlinks()
