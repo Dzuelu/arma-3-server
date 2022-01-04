@@ -4,7 +4,9 @@ LABEL maintainer="Dzuelu - github.com/Dzuelu"
 LABEL org.opencontainers.image.source=https://github.com/Dzuelu/arma-3-server
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN apt-get update \
+RUN dpkg --add-architecture i386 && \
+    && \
+    apt-get update \
     && \
     apt-get install -y --no-install-recommends --no-install-suggests \
         ca-certificates \
