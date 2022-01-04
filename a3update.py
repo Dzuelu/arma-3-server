@@ -124,7 +124,7 @@ def check_workshop_mod(mod_id):
         print("No update required for \"{}\" ({})... SKIPPING".format(mod_name, mod_id))
     
     copy_mod_keys(path)
-    return mod_name
+    WORKSHOP_MODS[mod_name] = mod_id
 
 
 def load_workshop_mods():
@@ -141,17 +141,15 @@ def load_workshop_mods():
         matches = re.finditer(WORKSHOP_ID_REGEX, html)
         for _, match in enumerate(matches, start=1):
             mod_id = match.group(1)
-            mod_name = check_workshop_mod(match.group(1))
-            WORKSHOP_MODS[mod_name] = mod_id
-            MODS.append(mod_name)
+            check_workshop_mod(mod_id)
 
 
 def load_local_mods(): # Should be called before create_mod_symlinks
     for mod_folder_name in os.listdir(A3_MODS_DIR):
         local_mod_path = os.path.join(A3_MODS_DIR, mod_folder_name)
-        if os.path.isdir(local_mod_path):
+        if os.path.isdir(local_mod_path) and not os.path.islink(local_mod_path):
             print("Found local mod \"{}\"".format(mod_folder_name))
-            MODS.append(mod_folder_name)
+            MODS.append(local_mod_path)
             copy_mod_keys(local_mod_path)
 
 
@@ -165,6 +163,7 @@ def create_mod_symlinks():
         real_path = "{}/{}".format(A3_WORKSHOP_DIR, mod_id)
 
         if os.path.isdir(real_path):
+            MODS.append(link_path)
             if not os.path.islink(link_path):
                 print("Creating symlink '{}'...".format(link_path))
                 os.symlink(real_path, link_path)
@@ -177,6 +176,7 @@ update_server()
 
 log("Loading and updating workshop mods...")
 load_workshop_mods()
+print("Workshop mods loaded", WORKSHOP_MODS)
 
 log("Converting workshop uppercase files/folders to lowercase...")
 lowercase_workshop_dir()
@@ -196,11 +196,11 @@ launch = "{} -limitFPS={} -world={}".format(
 )
 for mod in MODS:
     launch += " -mod=".format(mod)
-if env_defined("ARMA_PARAMS"):
-    launch += " {}".format(os.environ["ARMA_PARAMS"])
 if env_defined("ARMA_CDLC"):
     for cdlc in os.environ["ARMA_CDLC"].split(";"):
         launch += " -mod={}".format(cdlc)
+if env_defined("ARMA_PARAMS"):
+    launch += " {}".format(os.environ["ARMA_PARAMS"])
 # If needed, spot for adding headlessclients or localclients
 launch += ' -config="/arma3/configs/{}" -port={} -name="{}" -profiles="/arma3/configs/profiles"'.format(
     os.environ["ARMA_CONFIG"],
