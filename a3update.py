@@ -174,10 +174,12 @@ def load_mods_from_dir(directory: str, copyKeys: bool): # Loads both local and w
 
 
 def load_mods(): # Loads both local and workshop mods
-    debug('Loading Workshop mods:')
-    load_mods_from_dir(A3_WORKSHOP_MODS_DIR, False)
-    debug('Loading Local mods:')
-    load_mods_from_dir(A3_LOCAL_MODS_DIR, True)
+    if os.path.isdir(A3_WORKSHOP_MODS_DIR):
+        debug('Loading Workshop mods:')
+        load_mods_from_dir(A3_WORKSHOP_MODS_DIR, False)
+    if os.path.isdir(A3_LOCAL_MODS_DIR):
+        debug('Loading Local mods:')
+        load_mods_from_dir(A3_LOCAL_MODS_DIR, True)
 
 
 def create_hard_links_for_files(real_folder: str, link_folder: str, recursive = True):
