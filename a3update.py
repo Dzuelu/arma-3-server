@@ -47,7 +47,7 @@ WORKSHOP_MODS = {} # Loaded names and ids from workshop, WORKSHOP_MODS[mod_name]
 MODS = [] # The list of mod names to start with
 
 WORKSHOP_ID_REGEX = re.compile(r"filedetails\/\?id=(\d+)\"", re.MULTILINE)
-LAST_UPDATED_REGEX = re.compile(r"Update:(.*?)<\/div", re.DOTALL)
+LAST_UPDATED_REGEX = re.compile(r"workshopAnnouncement.*?<p id=\"(\d+)\">", re.DOTALL)
 MOD_NAME_REGEX = re.compile(r"workshopItemTitle\">(.*?)<\/div", re.DOTALL)
 WORKSHOP_CHANGELOG_URL = "https://steamcommunity.com/sharedfiles/filedetails/changelog"
 #endregion
