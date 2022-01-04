@@ -77,8 +77,10 @@ def call_steamcmd(params):
 
 
 def remove_old_hard_links():
-    shutil.rmtree(A3_KEYS_DIR)
-    shutil.rmtree(A3_WORKSHOP_MODS_DIR)
+    if os.path.isdir(A3_KEYS_DIR):
+        shutil.rmtree(A3_KEYS_DIR)
+    if os.path.isdir(A3_WORKSHOP_MODS_DIR):
+        shutil.rmtree(A3_WORKSHOP_MODS_DIR)
 
 
 def update_server():
