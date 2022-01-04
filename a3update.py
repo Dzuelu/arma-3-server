@@ -188,18 +188,22 @@ log("Creating workshop symlinks...")
 create_mod_symlinks()
 
 log("Launching Arma3-server...")
-launch = "{} -limitFPS={} -world={} {} {}".format(
+launch = "{} -limitFPS={} -world={}".format(
     os.environ["ARMA_BINARY"],
     os.environ["ARMA_LIMITFPS"],
     os.environ["ARMA_WORLD"],
-    os.environ["ARMA_PARAMS"],
+    os.environ["ARMA_PARAMS"]
 )
+for mod in MODS:
+    launch += " -mod=".format(mod)
+if env_defined("ARMA_PARAMS"):
+    launch += " {}".format(os.environ["ARMA_PARAMS"])
 if env_defined("ARMA_CDLC"):
     for cdlc in os.environ["ARMA_CDLC"].split(";"):
         launch += " -mod={}".format(cdlc)
 # If needed, spot for adding headlessclients or localclients
-launch += ' -config="/arma3/configs/{}"'.format(os.environ["ARMA_CONFIG"])
-launch += ' -port={} -name="{}" -profiles="/arma3/configs/profiles"'.format(
+launch += ' -config="/arma3/configs/{}" -port={} -name="{}" -profiles="/arma3/configs/profiles"'.format(
+    os.environ["ARMA_CONFIG"],
     os.environ["PORT"],
     os.environ["ARMA_PROFILE"]
 )
