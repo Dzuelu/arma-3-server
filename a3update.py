@@ -124,11 +124,11 @@ def check_workshop_mod(mod_id):
     if not os.path.isdir(path):
         print("Updating \"{}\" ({})".format(mod_name, mod_id))
         download_workshop_mod(mod_id)
+        lowercase_workshop_dir(path)
     else:
         print("No update required for \"{}\" ({})... SKIPPING".format(mod_name, mod_id))
     
     copy_mod_keys(path)
-    lowercase_workshop_dir(path)
     WORKSHOP_MODS[mod_name] = mod_id
 
 
