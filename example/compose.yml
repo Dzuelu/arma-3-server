@@ -7,7 +7,7 @@ services:
     network_mode: host
     volumes:
       - '/shared/arma3/cache:/steamcmd'
-      - '/shared/arma3/missions:/arma3/mpmissions'
+      - '/shared/arma3/mpmissions:/arma3/mpmissions'
       - '/shared/arma3/configs:/arma3/configs'
       - '/shared/arma3/mods:/arma3/mods'
       # Keep cached workshop content

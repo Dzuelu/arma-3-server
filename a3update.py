@@ -40,11 +40,12 @@ A3_SERVER_DIR = "/arma3"
 A3_SERVER_ID = "233780"
 A3_WORKSHOP_ID = "107410"
 
-A3_WORKSHOP_DIR = "{}/steamapps/workshop/content/{}".format(A3_SERVER_DIR, A3_WORKSHOP_ID)
-A3_MODS_DIR = "{}/mods".format(A3_SERVER_DIR)
+A3_STEAM_WORKSHOP_DIR = "{}/steamapps/workshop/content/{}".format(A3_SERVER_DIR, A3_WORKSHOP_ID)
+A3_LOCAL_MODS_DIR = "{}/mods".format(A3_SERVER_DIR) # Local mod folder
+A3_WORKSHOP_MODS_DIR = "{}/workshop".format(A3_SERVER_DIR) # workshop mod folder
 A3_KEYS_DIR = "{}/keys".format(A3_SERVER_DIR)
 WORKSHOP_MODS = {} # Loaded names and ids from workshop, WORKSHOP_MODS[mod_name] = mod_id
-MODS = [] # The list of mod names to start with
+MODS = [] # The list of mod paths to add to launch params
 
 WORKSHOP_ID_REGEX = re.compile(r"filedetails\/\?id=(\d+)\"", re.MULTILINE)
 LAST_UPDATED_REGEX = re.compile(r"workshopAnnouncement.*?<p id=\"(\d+)\">", re.DOTALL)
@@ -53,6 +54,10 @@ WORKSHOP_CHANGELOG_URL = "https://steamcommunity.com/sharedfiles/filedetails/cha
 #endregion
 
 #region Functions
+def env_defined(key):
+    return key in os.environ and len(os.environ[key]) > 0
+
+
 def log(msg):
     print("")
     print("{{0:=<{}}}".format(len(msg)).format(""))
@@ -60,14 +65,20 @@ def log(msg):
     print("{{0:=<{}}}".format(len(msg)).format(""))
 
 
+def debug(message):
+    if env_defined('DEBUG') and os.environ['DEBUG'] == '1':
+        print(message)
+
+
 def call_steamcmd(params):
-    print('steamcmd ', params)
+    debug('steamcmd ', params)
     os.system("{} {}".format(STEAM_CMD, params))
     print("")
 
 
-def env_defined(key):
-    return key in os.environ and len(os.environ[key]) > 0
+def remove_old_hard_links():
+    shutil.rmtree(A3_KEYS_DIR)
+    shutil.rmtree(A3_WORKSHOP_MODS_DIR)
 
 
 def update_server():
@@ -83,15 +94,12 @@ def update_server():
     call_steamcmd(steam_cmd_params)
 
 
-def copy_mod_keys(moddir):
-    keysdir = os.path.join(moddir, "keys")
-    if os.path.exists(keysdir):
-        for o in os.listdir(keysdir):
-            keyfile = os.path.join(keysdir, o)
-            if not os.path.isdir(keyfile):
-                shutil.copy2(keyfile, A3_KEYS_DIR)
+def copy_mod_keys(mod_directory):
+    mod_keys_directory = os.path.join(mod_directory, "keys")
+    if os.path.exists(mod_keys_directory):
+        create_hard_links_for_files(mod_keys_directory, A3_KEYS_DIR, False)
     else:
-        print("Missing keys:", keysdir)
+        print("Missing keys:", mod_keys_directory)
 
 
 def download_workshop_mod(mod_id):
@@ -113,9 +121,10 @@ def check_workshop_mod(mod_id):
     response = request.urlopen("{}/{}".format(WORKSHOP_CHANGELOG_URL, mod_id)).read().decode("utf-8")
     mod_name = MOD_NAME_REGEX.search(response).group(1)
     mod_last_updated = LAST_UPDATED_REGEX.search(response)
-    path = "{}/{}".format(A3_WORKSHOP_DIR, mod_id)
+    path = "{}/{}".format(A3_STEAM_WORKSHOP_DIR, mod_id)
+    WORKSHOP_MODS[mod_name] = mod_id
 
-    if mod_last_updated:
+    if os.path.isdir(path) and mod_last_updated:
         updated_at = datetime.fromtimestamp(int(mod_last_updated.group(1)))
         created_at = datetime.fromtimestamp(os.path.getctime(path))
         if (updated_at >= created_at):
@@ -127,15 +136,12 @@ def check_workshop_mod(mod_id):
         lowercase_workshop_dir(path)
     else:
         print("No update required for \"{}\" ({})... SKIPPING".format(mod_name, mod_id))
-    
-    copy_mod_keys(path)
-    WORKSHOP_MODS[mod_name] = mod_id
 
 
 def load_workshop_mods():
     mod_file = os.environ["WORKSHOP_MODS"]
     if (mod_file == ''):
-        log("WORKSHOP_MODS env variable not set, nothing to do.")
+        debug("WORKSHOP_MODS env variable not set, nothing to do.")
         return
     if (mod_file.startswith("http")):
         with open("preset.html", "wb") as f:
@@ -149,28 +155,46 @@ def load_workshop_mods():
             check_workshop_mod(mod_id)
 
 
-def load_local_mods(): # Should be called before create_mod_symlinks
-    for mod_folder_name in os.listdir(A3_MODS_DIR):
-        local_mod_path = os.path.join(A3_MODS_DIR, mod_folder_name)
-        if os.path.isdir(local_mod_path) and not os.path.islink(local_mod_path):
-            print("Found local mod \"{}\"".format(mod_folder_name))
-            MODS.append(local_mod_path)
-            copy_mod_keys(local_mod_path)
+def load_mods_from_dir(directory): # Loads both local and workshop mods
+    for mod_folder_name in os.listdir(directory):
+        mod_folder = os.path.join(directory, mod_folder_name)
+        if os.path.isdir(mod_folder):
+            debug("Found mod \"{}\"".format(mod_folder_name))
+            MODS.append(mod_folder)
+            copy_mod_keys(mod_folder)
+
+
+def load_mods(): # Loads both local and workshop mods
+    debug('Loading Workshop mods:')
+    load_mods_from_dir(A3_WORKSHOP_MODS_DIR)
+    debug('Loading Local mods:')
+    load_mods_from_dir(A3_LOCAL_MODS_DIR)
+
+
+def create_hard_links_for_files(real_folder, link_folder, recursive = True):
+    for real_file_name in os.listdir(real_folder):
+        real_item_path = os.path.join(real_folder, real_file_name)
+        link_item_path = os.path.join(link_folder, real_file_name)
+        if os.path.isdir(real_item_path) and recursive:
+            create_hard_links_for_files(real_item_path, link_item_path)
+        if os.path.isfile(real_item_path):
+            os.link(real_item_path, link_item_path)
 
 
 def create_mod_hardlinks():
     for mod_name, mod_id in WORKSHOP_MODS.items():
-        link_path = "{}/@{}".format(A3_MODS_DIR, mod_name)
-        real_path = "{}/{}".format(A3_WORKSHOP_DIR, mod_id)
+        link_path = "{}/@{}".format(A3_WORKSHOP_MODS_DIR, mod_name)
+        real_path = "{}/{}".format(A3_STEAM_WORKSHOP_DIR, mod_id)
 
         if os.path.isdir(real_path):
-            MODS.append(link_path)
-            if not os.path.islink(link_path):
-                print("Creating hard link '{}'...".format(link_path))
-                os.link(real_path, link_path)
+            debug("Creating hard link '{}'...".format(link_path))
+            create_hard_links_for_files(real_path, link_path)
         else:
             print("Mod '{}' does not exist! ({})".format(mod_name, real_path))
 #endregion
+
+log("Removing old hard links to workshop/keys")
+remove_old_hard_links()
 
 log("Updating A3 server ({})".format(A3_SERVER_ID))
 update_server()
@@ -179,11 +203,11 @@ log("Loading and updating workshop mods...")
 load_workshop_mods()
 print("Workshop mods loaded", WORKSHOP_MODS)
 
-log("Adding local/server mods...")
-load_local_mods()
-
 log("Creating workshop hard links...")
 create_mod_hardlinks()
+
+log("Creating mod list...")
+load_mods()
 
 log("Launching Arma3-server...")
 launch = "{} -limitFPS={} -world={}".format(
