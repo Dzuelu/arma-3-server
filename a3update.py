@@ -71,7 +71,7 @@ def debug(message):
 
 
 def call_steamcmd(params):
-    debug('steamcmd ', params)
+    debug('steamcmd {}'.format(params))
     os.system("{} {}".format(STEAM_CMD, params))
     print("")
 
