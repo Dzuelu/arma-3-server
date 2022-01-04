@@ -4,15 +4,12 @@ LABEL maintainer="Dzuelu - github.com/Dzuelu"
 LABEL org.opencontainers.image.source=https://github.com/Dzuelu/arma-3-server
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN dpkg --add-architecture i386 && \
-    && \
-    apt-get update \
+RUN apt-get update \
     && \
     apt-get install -y --no-install-recommends --no-install-suggests \
         ca-certificates \
         lib32gcc1 \
         lib32stdc++6 \
-        libsdl2-2.0-0:i386 \
         locales \
         python3 \
         rename \
