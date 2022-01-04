@@ -54,23 +54,23 @@ WORKSHOP_CHANGELOG_URL = "https://steamcommunity.com/sharedfiles/filedetails/cha
 #endregion
 
 #region Functions
-def env_defined(key):
+def env_defined(key: str):
     return key in os.environ and len(os.environ[key]) > 0
 
 
-def log(msg):
+def log(msg: str):
     print("")
     print("{{0:=<{}}}".format(len(msg)).format(""))
     print(msg)
     print("{{0:=<{}}}".format(len(msg)).format(""))
 
 
-def debug(message):
+def debug(message: str):
     if env_defined('DEBUG') and os.environ['DEBUG'] == '1':
         print(message)
 
 
-def call_steamcmd(params):
+def call_steamcmd(params: str):
     debug('steamcmd {}'.format(params))
     os.system("{} {}".format(STEAM_CMD, params))
     print("")
@@ -98,7 +98,7 @@ def update_server():
     call_steamcmd(steam_cmd_params)
 
 
-def copy_mod_keys(mod_directory):
+def copy_mod_keys(mod_directory: str):
     mod_keys_directory = os.path.join(mod_directory, "keys")
     if os.path.exists(mod_keys_directory):
         create_hard_links_for_files(mod_keys_directory, A3_KEYS_DIR, False)
@@ -106,7 +106,7 @@ def copy_mod_keys(mod_directory):
         print("Missing keys:", mod_keys_directory)
 
 
-def download_workshop_mod(mod_id):
+def download_workshop_mod(mod_id: str):
     steam_cmd_params  = " +login {} {}".format(STEAM_USER, STEAM_PASS)
     steam_cmd_params += " +force_install_dir {}".format(A3_SERVER_DIR)
     steam_cmd_params += " +workshop_download_item {} {}".format(
@@ -119,11 +119,11 @@ def download_workshop_mod(mod_id):
     call_steamcmd(steam_cmd_params)
 
 
-def lowercase_workshop_dir(path):
+def lowercase_workshop_dir(path: str):
     os.system("(cd {} && find . -depth -exec rename -v 's/(.*)\/([^\/]*)/$1\/\L$2/' {{}} \;)".format(path))
 
 
-def check_workshop_mod(mod_id):
+def check_workshop_mod(mod_id: str):
     response = request.urlopen("{}/{}".format(WORKSHOP_CHANGELOG_URL, mod_id)).read().decode("utf-8")
     mod_name = MOD_NAME_REGEX.search(response).group(1)
     mod_last_updated = LAST_UPDATED_REGEX.search(response)
@@ -163,7 +163,7 @@ def load_workshop_mods():
             check_workshop_mod(mod_id)
 
 
-def load_mods_from_dir(directory, copyKeys): # Loads both local and workshop mods
+def load_mods_from_dir(directory: str, copyKeys: bool): # Loads both local and workshop mods
     for mod_folder_name in os.listdir(directory):
         mod_folder = os.path.join(directory, mod_folder_name)
         if os.path.isdir(mod_folder):
@@ -180,15 +180,15 @@ def load_mods(): # Loads both local and workshop mods
     load_mods_from_dir(A3_LOCAL_MODS_DIR, True)
 
 
-def create_hard_links_for_files(real_folder, link_folder, recursive = True):
+def create_hard_links_for_files(real_folder: str, link_folder: str, recursive = True):
     for real_file_name in os.listdir(real_folder):
         real_item_path = os.path.join(real_folder, real_file_name)
-        link_item_path = os.path.join(link_folder, real_file_name)
+        link_item_path = os.path.join(link_folder, real_file_name).lower()
         if os.path.isdir(real_item_path) and recursive:
             create_hard_links_for_files(real_item_path, link_item_path)
         if os.path.isfile(real_item_path):
-            if not os.path.isdir(link_folder):
-                os.makedirs(link_folder)
+            if not os.path.isdir(link_folder.lower()):
+                os.makedirs(link_folder.lower())
             if not os.path.isfile(link_item_path):
                 os.link(real_item_path, link_item_path)
             else:
@@ -199,7 +199,7 @@ def create_hard_links_for_files(real_folder, link_folder, recursive = True):
 
 def create_mod_hardlinks():
     for mod_name, mod_id in WORKSHOP_MODS.items():
-        link_path = "{}/{}".format(A3_WORKSHOP_MODS_DIR, mod_name)
+        link_path = "{}/@{}".format(A3_WORKSHOP_MODS_DIR, mod_name)
         real_path = "{}/{}".format(A3_STEAM_WORKSHOP_DIR, mod_id)
 
         if os.path.isdir(real_path):
