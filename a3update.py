@@ -158,7 +158,7 @@ def load_local_mods(): # Should be called before create_mod_symlinks
             copy_mod_keys(local_mod_path)
 
 
-def create_mod_symlinks():
+def create_mod_hardlinks():
     for mod_name, mod_id in WORKSHOP_MODS.items():
         link_path = "{}/@{}".format(A3_MODS_DIR, mod_name)
         real_path = "{}/{}".format(A3_WORKSHOP_DIR, mod_id)
@@ -166,8 +166,8 @@ def create_mod_symlinks():
         if os.path.isdir(real_path):
             MODS.append(link_path)
             if not os.path.islink(link_path):
-                print("Creating symlink '{}'...".format(link_path))
-                os.symlink(real_path, link_path)
+                print("Creating hard link '{}'...".format(link_path))
+                os.link(real_path, link_path)
         else:
             print("Mod '{}' does not exist! ({})".format(mod_name, real_path))
 #endregion
@@ -182,8 +182,8 @@ print("Workshop mods loaded", WORKSHOP_MODS)
 log("Adding local/server mods...")
 load_local_mods()
 
-log("Creating workshop symlinks...")
-create_mod_symlinks()
+log("Creating workshop hard links...")
+create_mod_hardlinks()
 
 log("Launching Arma3-server...")
 launch = "{} -limitFPS={} -world={}".format(
