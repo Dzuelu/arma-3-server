@@ -1,0 +1,10 @@
+# Ignore everything but look in all folders
+*
+!/*
+
+# Do not ignore these files
+!Dockerfile
+!*.py
+!*.md
+!*.yml
+!.gitignore

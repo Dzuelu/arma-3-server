@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  arma3:
+    build: https://github.com/Dzuelu/arma-3-server.git
+    platform: linux/amd64
+    container_name: arma3-server
+    network_mode: host
+    volumes:
+      - '/shared/arma3/cache:/steamcmd'
+      - '/shared/arma3/missions:/arma3/mpmissions'
+      - '/shared/arma3/configs:/arma3/configs'
+      - '/shared/arma3/mods:/arma3/mods'
+      # Keep cached workshop content
+      - '/shared/arma3/workshop:/arma3/steamapps/workshop/content/107410'
+      # Exported mods list
+      - '/shared/arma3/mods.html:/arma3/mods.html'
+    environment:
+      - MODS_PRESET=mods.html
+      - ARMA_CDLC=gm;ws
+      - STEAM_BRANCH=creatordlc
+      - STEAM_USERNAME=*********************
+      - STEAM_PASSWORD=*********************
+    restart: unless-stopped
