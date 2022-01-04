@@ -91,7 +91,9 @@ def update_server():
         steam_cmd_params += " -beta {}".format(os.environ["STEAM_BRANCH"])
     if env_defined("STEAM_BRANCH_PASSWORD"):
         steam_cmd_params += " -betapassword {}".format(os.environ["STEAM_BRANCH_PASSWORD"])
-    steam_cmd_params += " validate +quit"
+    if os.environ["VALIDATE"] == '1':
+        steam_cmd_params += " validate"
+    steam_cmd_params += " +quit"
 
     call_steamcmd(steam_cmd_params)
 
@@ -107,10 +109,12 @@ def copy_mod_keys(mod_directory):
 def download_workshop_mod(mod_id):
     steam_cmd_params  = " +login {} {}".format(STEAM_USER, STEAM_PASS)
     steam_cmd_params += " +force_install_dir {}".format(A3_SERVER_DIR)
-    steam_cmd_params += " +workshop_download_item {} {} validate".format(
+    steam_cmd_params += " +workshop_download_item {} {}".format(
         A3_WORKSHOP_ID,
         mod_id
     )
+    if os.environ["VALIDATE"] == '1':
+        steam_cmd_params += " validate"
     steam_cmd_params += " +quit"
     call_steamcmd(steam_cmd_params)
 
@@ -183,6 +187,8 @@ def create_hard_links_for_files(real_folder, link_folder, recursive = True):
         if os.path.isdir(real_item_path) and recursive:
             create_hard_links_for_files(real_item_path, link_item_path)
         if os.path.isfile(real_item_path):
+            if not os.path.isdir(link_folder):
+                os.makedirs(link_folder)
             if not os.path.isfile(link_item_path):
                 os.link(real_item_path, link_item_path)
             else:
