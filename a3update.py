@@ -183,7 +183,13 @@ def create_hard_links_for_files(real_folder, link_folder, recursive = True):
         if os.path.isdir(real_item_path) and recursive:
             create_hard_links_for_files(real_item_path, link_item_path)
         if os.path.isfile(real_item_path):
-            os.link(real_item_path, link_item_path)
+            if not os.path.isfile(link_item_path):
+                os.link(real_item_path, link_item_path)
+            else:
+                 # Happend with multiple a3_aegis.bikey files, it looks like multiple mods have this key also
+                 # TODO: Determine if this is ok or if something else should be done
+                print('Duplicate link file! This should not happen (I think)')
+                print("realPath: {} -> linkPath: {}".format(real_item_path, link_item_path))
 
 
 def create_mod_hardlinks():
