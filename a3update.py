@@ -209,21 +209,24 @@ def create_mod_hardlinks():
             print("Mod '{}' does not exist! ({})".format(mod_name, real_path))
 #endregion
 
-log("Removing old hard links to workshop/keys")
-remove_old_hard_links()
+# TEMP: DEBUG
+os.system('who')
 
-log("Updating A3 server ({})".format(A3_SERVER_ID))
-update_server()
+# log("Removing old hard links to workshop/keys")
+# remove_old_hard_links()
 
-log("Loading and updating workshop mods...")
-load_workshop_mods()
-print("Workshop mods loaded", WORKSHOP_MODS)
+# log("Updating A3 server ({})".format(A3_SERVER_ID))
+# update_server()
 
-log("Creating workshop hard links...")
-create_mod_hardlinks()
+# log("Loading and updating workshop mods...")
+# load_workshop_mods()
+# print("Workshop mods loaded", WORKSHOP_MODS)
 
-log("Creating mod list...")
-load_mods()
+# log("Creating workshop hard links...")
+# create_mod_hardlinks()
+
+# log("Creating mod list...")
+# load_mods()
 
 log("Launching Arma3-server...")
 launch = "{} -limitFPS={} -world={}".format(
@@ -245,5 +248,5 @@ launch += ' -config="/arma3/configs/{}" -port={} -name="{}" -profiles="/arma3/co
     os.environ["ARMA_PROFILE"]
 )
 # If needed, spot for adding loading of servermods
-print(launch)
-os.system(launch)
+# print(launch)
+# os.system(launch)
