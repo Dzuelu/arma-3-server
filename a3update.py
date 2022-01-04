@@ -191,11 +191,10 @@ log("Launching Arma3-server...")
 launch = "{} -limitFPS={} -world={}".format(
     os.environ["ARMA_BINARY"],
     os.environ["ARMA_LIMITFPS"],
-    os.environ["ARMA_WORLD"],
-    os.environ["ARMA_PARAMS"]
+    os.environ["ARMA_WORLD"]
 )
 for mod in MODS:
-    launch += " -mod=".format(mod)
+    launch += " -mod={}".format(mod)
 if env_defined("ARMA_CDLC"):
     for cdlc in os.environ["ARMA_CDLC"].split(";"):
         launch += " -mod={}".format(cdlc)
