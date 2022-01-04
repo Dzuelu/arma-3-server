@@ -7,12 +7,13 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update \
     && \
     apt-get install -y --no-install-recommends --no-install-suggests \
-        python3 \
-        locales \
-        lib32stdc++6 \
-        lib32gcc1 \
-        wget \
         ca-certificates \
+        lib32gcc1 \
+        lib32stdc++6 \
+        locales \
+        python3 \
+        rename \
+        wget \
     && \
     apt-get remove --purge -y \
     && \
@@ -29,6 +30,7 @@ RUN apt-get update \
     wget -qO- 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxf - -C /steamcmd
 
 ENV LANG en_US.utf8
+ENV PYTHONUNBUFFERED=1
 
 ENV ARMA_BINARY=./arma3server
 ENV ARMA_CONFIG=main.cfg

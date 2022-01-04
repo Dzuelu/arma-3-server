@@ -61,6 +61,7 @@ def log(msg):
 
 
 def call_steamcmd(params):
+    print('steamcmd ', params)
     os.system("{} {}".format(STEAM_CMD, params))
     print("")
 
