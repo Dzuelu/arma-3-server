@@ -136,7 +136,7 @@ def load_workshop_mods():
         with open("preset.html", "wb") as f:
             f.write(request.urlopen(mod_file).read())
         mod_file = "preset.html"
-    with open(mod_file):
+    with open(mod_file) as f:
         html = f.read()
         matches = re.finditer(WORKSHOP_ID_REGEX, html)
         for _, match in enumerate(matches, start=1):

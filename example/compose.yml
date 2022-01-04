@@ -15,7 +15,7 @@ services:
       # Exported mods list
       - '/shared/arma3/mods.html:/arma3/mods.html'
     environment:
-      - MODS_PRESET=mods.html
+      - WORKSHOP_MODS=mods.html
       - ARMA_CDLC=gm;ws
       - STEAM_BRANCH=creatordlc
       - STEAM_USERNAME=*********************
