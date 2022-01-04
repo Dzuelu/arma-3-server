@@ -168,7 +168,7 @@ def load_mods_from_dir(directory: str, copyKeys: bool): # Loads both local and w
         mod_folder = os.path.join(directory, mod_folder_name)
         if os.path.isdir(mod_folder):
             debug("Found mod \"{}\"".format(mod_folder_name))
-            MODS.append(mod_folder)
+            MODS.append(mod_folder.replace('{}/'.format(A3_SERVER_DIR), ''))
             if copyKeys:
                 copy_mod_keys(mod_folder)
 
@@ -187,8 +187,8 @@ def create_hard_links_for_files(real_folder: str, link_folder: str, recursive = 
         if os.path.isdir(real_item_path) and recursive:
             create_hard_links_for_files(real_item_path, link_item_path)
         if os.path.isfile(real_item_path):
-            if not os.path.isdir(link_folder.lower()):
-                os.makedirs(link_folder.lower())
+            if not os.path.isdir(link_folder):
+                os.makedirs(link_folder)
             if not os.path.isfile(link_item_path):
                 os.link(real_item_path, link_item_path)
             else:
