@@ -10,6 +10,7 @@ RUN apt-get update \
         ca-certificates \
         lib32gcc1 \
         lib32stdc++6 \
+        libsdl2-2.0-0:i386 \
         locales \
         python3 \
         rename \
