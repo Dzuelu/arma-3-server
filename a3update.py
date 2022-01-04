@@ -155,6 +155,8 @@ def load_workshop_mods():
         with open("preset.html", "wb") as f:
             f.write(request.urlopen(mod_file).read())
         mod_file = "preset.html"
+    if not os.path.isfile(mod_file):
+        raise Exception('Failed to download WORKSHOP_MODS list or can not access specificed file!')
     with open(mod_file) as f:
         html = f.read()
         matches = re.finditer(WORKSHOP_ID_REGEX, html)
