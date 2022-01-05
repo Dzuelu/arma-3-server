@@ -42,7 +42,6 @@ A3_WORKSHOP_ID = "107410"
 A3_STEAM_WORKSHOP_DIR = "{}/steamapps/workshop/content/{}".format(A3_SERVER_DIR, A3_WORKSHOP_ID)
 A3_LOCAL_MODS_DIR = "{}/mods".format(A3_SERVER_DIR) # Local mod folder
 A3_SERVER_MODS_DIR = "{}/servermods".format(A3_SERVER_DIR) # Server mod folder
-A3_WORKSHOP_MODS_DIR = "{}/workshop".format(A3_SERVER_DIR) # Workshop mod folder
 A3_KEYS_DIR = "{}/keys".format(A3_SERVER_DIR)
 WORKSHOP_MODS = {} # Loaded names and ids from workshop, WORKSHOP_MODS[mod_name] = mod_id
 
@@ -67,16 +66,6 @@ def log(msg: str):
 def debug(message: str):
     if env_defined('DEBUG') and os.environ['DEBUG'] == '1':
         print(message)
-
-
-def startup_checks():
-    if not os.path.isfile(STEAM_CMD):
-        log("Downloading steamcmd...")
-        os.system("wget -qO- 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxf - -C /steamcmd")
-    if os.path.isdir(A3_WORKSHOP_MODS_DIR):
-        debug('Deleting old workshop directory...')
-        shutil.rmtree(A3_WORKSHOP_MODS_DIR)
-        os.makedirs(A3_WORKSHOP_MODS_DIR)
 
 
 def call_steamcmd(params: str):
@@ -184,31 +173,18 @@ def load_mods_from_dir(directory: str, copyKeys: bool): # Loads both local and w
             if copyKeys:
                 copy_mod_keys(mod_folder)
     return load_mods_paths
-
-
-def create_mod_symlinks():
-    for mod_name, mod_id in WORKSHOP_MODS.items():
-        link_path = "{}/@{}".format(A3_WORKSHOP_MODS_DIR, mod_name)
-        real_path = "{}/{}".format(A3_STEAM_WORKSHOP_DIR, mod_id)
-
-        if os.path.isdir(real_path):
-            if not os.path.islink(link_path):
-                os.symlink(real_path, link_path)
-                print("Creating symlink '{}'...".format(link_path))
-        else:
-            print("Mod '{}' does not exist! ({})".format(mod_name, real_path))
 #endregion
 
-startup_checks()
+# Startup check
+if not os.path.isfile(STEAM_CMD):
+    log("Downloading steamcmd...")
+    os.system("wget -qO- 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxf - -C /steamcmd")
 
 log("Updating A3 server ({})".format(A3_SERVER_ID))
 update_server()
 
 log("Checking for updates for workshop mods...")
 check_workshop_mods()
-
-log("Create mod symlinks for steam workshop mods...")
-create_mod_symlinks()
 
 log("Launching Arma3-server...")
 launch = "{} -limitFPS={} -world={}".format(
@@ -217,9 +193,9 @@ launch = "{} -limitFPS={} -world={}".format(
     os.environ["ARMA_WORLD"]
 )
 
-if os.path.isdir(A3_WORKSHOP_MODS_DIR):
+if os.path.isdir(A3_STEAM_WORKSHOP_DIR):
     debug('Loading Workshop mods:')
-    launch += load_mods_from_dir(A3_WORKSHOP_MODS_DIR, False)
+    launch += load_mods_from_dir(A3_STEAM_WORKSHOP_DIR, False)
 
 if os.path.isdir(A3_LOCAL_MODS_DIR):
     debug('Loading Local mods:')
