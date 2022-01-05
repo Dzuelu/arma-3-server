@@ -69,6 +69,12 @@ def debug(message: str):
         print(message)
 
 
+def check_for_steamcmd():
+    if not os.path.isfile(STEAM_CMD):
+        log("Downloading steamcmd")
+        os.system("wget -qO- 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxf - -C /steamcmd")
+
+
 def call_steamcmd(params: str):
     debug('steamcmd {}'.format(params))
     os.system("{} {}".format(STEAM_CMD, params))
@@ -191,6 +197,8 @@ def create_mod_symlinks():
         else:
             print("Mod '{}' does not exist! ({})".format(mod_name, real_path))
 #endregion
+
+check_for_steamcmd()
 
 log("Updating A3 server ({})".format(A3_SERVER_ID))
 update_server()
