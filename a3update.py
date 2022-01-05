@@ -69,10 +69,14 @@ def debug(message: str):
         print(message)
 
 
-def check_for_steamcmd():
+def startup_checks():
     if not os.path.isfile(STEAM_CMD):
         log("Downloading steamcmd...")
         os.system("wget -qO- 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxf - -C /steamcmd")
+    if os.path.isdir(A3_WORKSHOP_MODS_DIR):
+        debug('Deleting old workshop directory...')
+        shutil.rmtree(A3_WORKSHOP_MODS_DIR)
+        os.makedirs(A3_WORKSHOP_MODS_DIR)
 
 
 def call_steamcmd(params: str):
@@ -183,10 +187,6 @@ def load_mods_from_dir(directory: str, copyKeys: bool): # Loads both local and w
 
 
 def create_mod_symlinks():
-    if os.path.isdir(A3_WORKSHOP_MODS_DIR):
-        debug('Deleting old workshop directory...')
-        shutil.rmtree(A3_WORKSHOP_MODS_DIR)
-        os.makedirs(A3_WORKSHOP_MODS_DIR)
     for mod_name, mod_id in WORKSHOP_MODS.items():
         link_path = "{}/@{}".format(A3_WORKSHOP_MODS_DIR, mod_name)
         real_path = "{}/{}".format(A3_STEAM_WORKSHOP_DIR, mod_id)
@@ -199,7 +199,7 @@ def create_mod_symlinks():
             print("Mod '{}' does not exist! ({})".format(mod_name, real_path))
 #endregion
 
-check_for_steamcmd()
+startup_checks()
 
 log("Updating A3 server ({})".format(A3_SERVER_ID))
 update_server()
