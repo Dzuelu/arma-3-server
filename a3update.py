@@ -45,7 +45,6 @@ A3_SERVER_MODS_DIR = "{}/servermods".format(A3_SERVER_DIR) # Server mod folder
 A3_WORKSHOP_MODS_DIR = "{}/workshop".format(A3_SERVER_DIR) # Workshop mod folder
 A3_KEYS_DIR = "{}/keys".format(A3_SERVER_DIR)
 WORKSHOP_MODS = {} # Loaded names and ids from workshop, WORKSHOP_MODS[mod_name] = mod_id
-MODS = [] # The list of mod paths to add to launch params
 
 WORKSHOP_ID_REGEX = re.compile(r"filedetails\/\?id=(\d+)\"", re.MULTILINE)
 LAST_UPDATED_REGEX = re.compile(r"workshopAnnouncement.*?<p id=\"(\d+)\">", re.DOTALL)
@@ -181,7 +180,7 @@ def create_mod_symlinks():
     if os.path.isdir(A3_WORKSHOP_MODS_DIR):
         shutil.rmtree(A3_WORKSHOP_MODS_DIR)
         os.makedirs(A3_WORKSHOP_MODS_DIR)
-    for mod_name, mod_id in MODS.items():
+    for mod_name, mod_id in WORKSHOP_MODS.items():
         link_path = "{}/@{}".format(A3_WORKSHOP_MODS_DIR, mod_name)
         real_path = "{}/{}".format(A3_STEAM_WORKSHOP_DIR, mod_id)
 
