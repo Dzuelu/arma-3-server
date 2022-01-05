@@ -71,7 +71,7 @@ def debug(message: str):
 
 def check_for_steamcmd():
     if not os.path.isfile(STEAM_CMD):
-        log("Downloading steamcmd")
+        log("Downloading steamcmd...")
         os.system("wget -qO- 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxf - -C /steamcmd")
 
 
@@ -184,6 +184,7 @@ def load_mods_from_dir(directory: str, copyKeys: bool): # Loads both local and w
 
 def create_mod_symlinks():
     if os.path.isdir(A3_WORKSHOP_MODS_DIR):
+        debug('Deleting old workshop directory...')
         shutil.rmtree(A3_WORKSHOP_MODS_DIR)
         os.makedirs(A3_WORKSHOP_MODS_DIR)
     for mod_name, mod_id in WORKSHOP_MODS.items():
