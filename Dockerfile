@@ -25,9 +25,9 @@ RUN apt-get update \
     && \
     localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 \
     && \
-    mkdir -p /steamcmd \
+    [[ ! -d "/steamcmd" ]] && mkdir -p /steamcmd \
     && \
-    wget -qO- 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxf - -C /steamcmd
+    [[ ! -f "/steamcmd/steamcmd.sh" ]] && wget -qO- 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxf - -C /steamcmd
 
 ENV LANG en_US.utf8
 ENV PYTHONUNBUFFERED=1
@@ -39,11 +39,12 @@ ENV ARMA_LIMITFPS=1000
 ENV ARMA_PARAMS=
 ENV ARMA_PROFILE=main
 ENV ARMA_WORLD=empty
+ENV FORCE_DOWNLOAD_WORKSHOP=0
 ENV MODS_LOCAL=true
 ENV PORT=2302
 ENV STEAM_BRANCH_PASSWORD=
 ENV STEAM_BRANCH=public
-ENV VALIDATE=1
+ENV STEAM_VALIDATE=1
 ENV WORKSHOP_MODS=
 
 EXPOSE 2302/udp

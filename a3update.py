@@ -42,7 +42,7 @@ A3_WORKSHOP_ID = "107410"
 
 A3_STEAM_WORKSHOP_DIR = "{}/steamapps/workshop/content/{}".format(A3_SERVER_DIR, A3_WORKSHOP_ID)
 A3_LOCAL_MODS_DIR = "{}/mods".format(A3_SERVER_DIR) # Local mod folder
-A3_WORKSHOP_MODS_DIR = "{}/workshop".format(A3_SERVER_DIR) # workshop mod folder
+A3_SERVER_MODS_DIR = "{}/servermods".format(A3_SERVER_DIR) # Server mod folder
 A3_KEYS_DIR = "{}/keys".format(A3_SERVER_DIR)
 WORKSHOP_MODS = {} # Loaded names and ids from workshop, WORKSHOP_MODS[mod_name] = mod_id
 MODS = [] # The list of mod paths to add to launch params
@@ -76,13 +76,6 @@ def call_steamcmd(params: str):
     print("")
 
 
-def remove_old_hard_links():
-    if os.path.isdir(A3_KEYS_DIR):
-        shutil.rmtree(A3_KEYS_DIR)
-    if os.path.isdir(A3_WORKSHOP_MODS_DIR):
-        shutil.rmtree(A3_WORKSHOP_MODS_DIR)
-
-
 def update_server():
     steam_cmd_params  = " +login {} {}".format(STEAM_USER, STEAM_PASS)
     steam_cmd_params += " +force_install_dir {}".format(A3_SERVER_DIR)
@@ -91,17 +84,19 @@ def update_server():
         steam_cmd_params += " -beta {}".format(os.environ["STEAM_BRANCH"])
     if env_defined("STEAM_BRANCH_PASSWORD"):
         steam_cmd_params += " -betapassword {}".format(os.environ["STEAM_BRANCH_PASSWORD"])
-    if os.environ["VALIDATE"] == '1':
+    if os.environ["STEAM_VALIDATE"] == '1':
         steam_cmd_params += " validate"
     steam_cmd_params += " +quit"
-
     call_steamcmd(steam_cmd_params)
 
 
 def copy_mod_keys(mod_directory: str):
     mod_keys_directory = os.path.join(mod_directory, "keys")
     if os.path.exists(mod_keys_directory):
-        create_hard_links_for_files(mod_keys_directory, A3_KEYS_DIR, False)
+        for mod_key_file_name in os.listdir(mod_keys_directory):
+            mod_key_file_path = os.path.join(mod_keys_directory, mod_key_file_name)
+            if not os.path.isdir(mod_key_file_path):
+                shutil.copy2(mod_key_file_path, A3_KEYS_DIR)
     else:
         print("Missing keys:", mod_keys_directory)
 
@@ -113,7 +108,7 @@ def download_workshop_mod(mod_id: str):
         A3_WORKSHOP_ID,
         mod_id
     )
-    if os.environ["VALIDATE"] == '1':
+    if os.environ["STEAM_VALIDATE"] == '1':
         steam_cmd_params += " validate"
     steam_cmd_params += " +quit"
     call_steamcmd(steam_cmd_params)
@@ -133,7 +128,7 @@ def check_workshop_mod(mod_id: str):
     if os.path.isdir(path) and mod_last_updated:
         updated_at = datetime.fromtimestamp(int(mod_last_updated.group(1)))
         created_at = datetime.fromtimestamp(os.path.getctime(path))
-        if (updated_at >= created_at):
+        if (updated_at >= created_at or os.environ["FORCE_DOWNLOAD_WORKSHOP"] == '1'):
             shutil.rmtree(path)
     
     if not os.path.isdir(path):
@@ -142,11 +137,11 @@ def check_workshop_mod(mod_id: str):
         lowercase_workshop_dir(path)
     else:
         print("No update required for \"{}\" ({})... SKIPPING".format(mod_name, mod_id))
-    # Copy keys here so it's easier to see the mod that has missing keys
+    # Copy keys here so it's easier to see the workshop mod that has missing keys
     copy_mod_keys(path)
 
 
-def load_workshop_mods():
+def check_workshop_mods():
     mod_file = os.environ["WORKSHOP_MODS"]
     if (mod_file == ''):
         debug("WORKSHOP_MODS env variable not set, nothing to do.")
@@ -156,13 +151,17 @@ def load_workshop_mods():
             f.write(request.urlopen(mod_file).read())
         mod_file = "preset.html"
     if not os.path.isfile(mod_file):
-        raise Exception('Failed to download WORKSHOP_MODS list or can not access specificed file!')
+        raise Exception('\n'.join([
+            'Unable to load WORKSHOP_MODS file!',
+            'The WORKSHOP_MODS file should be added to the volume in the arma directory'
+        ]))
     with open(mod_file) as f:
         html = f.read()
         matches = re.finditer(WORKSHOP_ID_REGEX, html)
         for _, match in enumerate(matches, start=1):
             mod_id = match.group(1)
             check_workshop_mod(mod_id)
+    debug("Workshop mods loaded\n{}".format(WORKSHOP_MODS))
 
 
 def load_mods_from_dir(directory: str, copyKeys: bool): # Loads both local and workshop mods
@@ -170,61 +169,26 @@ def load_mods_from_dir(directory: str, copyKeys: bool): # Loads both local and w
         mod_folder = os.path.join(directory, mod_folder_name)
         if os.path.isdir(mod_folder):
             debug("Found mod \"{}\"".format(mod_folder_name))
+            # Mods use relative paths from the arma install directory
             MODS.append(mod_folder.replace('{}/'.format(A3_SERVER_DIR), ''))
             if copyKeys:
                 copy_mod_keys(mod_folder)
 
 
 def load_mods(): # Loads both local and workshop mods
-    if os.path.isdir(A3_WORKSHOP_MODS_DIR):
+    if os.path.isdir(A3_STEAM_WORKSHOP_DIR):
         debug('Loading Workshop mods:')
-        load_mods_from_dir(A3_WORKSHOP_MODS_DIR, False)
+        load_mods_from_dir(A3_STEAM_WORKSHOP_DIR, False)
     if os.path.isdir(A3_LOCAL_MODS_DIR):
         debug('Loading Local mods:')
         load_mods_from_dir(A3_LOCAL_MODS_DIR, True)
-
-
-def create_hard_links_for_files(real_folder: str, link_folder: str, recursive = True):
-    for real_file_name in os.listdir(real_folder):
-        real_item_path = os.path.join(real_folder, real_file_name)
-        link_item_path = os.path.join(link_folder, real_file_name)
-        if os.path.isdir(real_item_path) and recursive:
-            create_hard_links_for_files(real_item_path, link_item_path)
-        if os.path.isfile(real_item_path):
-            if not os.path.isdir(link_folder):
-                os.makedirs(link_folder)
-            if not os.path.isfile(link_item_path):
-                os.link(real_item_path, link_item_path)
-            else:
-                 # Happend with multiple a3_aegis.bikey files, it looks like multiple mods have this key also
-                 # TODO: Determine if this is ok or if something else should be done
-                print("Duplicate link file! This should not happen (I think). realPath: {} -> linkPath: {}".format(real_item_path, link_item_path))
-
-
-def create_mod_hardlinks():
-    for mod_name, mod_id in WORKSHOP_MODS.items():
-        link_path = "{}/@{}".format(A3_WORKSHOP_MODS_DIR, mod_name)
-        real_path = "{}/{}".format(A3_STEAM_WORKSHOP_DIR, mod_id)
-
-        if os.path.isdir(real_path):
-            debug("Creating hard link '{}'...".format(link_path))
-            create_hard_links_for_files(real_path, link_path)
-        else:
-            print("Mod '{}' does not exist! ({})".format(mod_name, real_path))
 #endregion
-
-log("Removing old hard links to workshop/keys")
-remove_old_hard_links()
 
 log("Updating A3 server ({})".format(A3_SERVER_ID))
 update_server()
 
-log("Loading and updating workshop mods...")
-load_workshop_mods()
-print("Workshop mods loaded", WORKSHOP_MODS)
-
-log("Creating workshop hard links...")
-create_mod_hardlinks()
+log("Checking for updates for workshop mods...")
+check_workshop_mods()
 
 log("Creating mod list...")
 load_mods()
@@ -248,6 +212,11 @@ launch += ' -config="/arma3/configs/{}" -port={} -name="{}" -profiles="/arma3/co
     os.environ["PORT"],
     os.environ["ARMA_PROFILE"]
 )
-# If needed, spot for adding loading of servermods
+if os.path.isdir(A3_SERVER_MODS_DIR):
+    MODS.clear() # Clear already loaded mods
+    debug('Loading Server mods:')
+    load_mods_from_dir(A3_SERVER_MODS_DIR, True)
+    for mod in MODS:
+        launch += " -mod=\"{}\"".format(mod)
 print(launch)
 os.system(launch)
