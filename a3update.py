@@ -26,7 +26,6 @@ import os
 import os.path
 import re
 import shutil
-import time
 
 from datetime import datetime
 from urllib import request
@@ -43,6 +42,7 @@ A3_WORKSHOP_ID = "107410"
 A3_STEAM_WORKSHOP_DIR = "{}/steamapps/workshop/content/{}".format(A3_SERVER_DIR, A3_WORKSHOP_ID)
 A3_LOCAL_MODS_DIR = "{}/mods".format(A3_SERVER_DIR) # Local mod folder
 A3_SERVER_MODS_DIR = "{}/servermods".format(A3_SERVER_DIR) # Server mod folder
+A3_WORKSHOP_MODS_DIR = "{}/workshop".format(A3_SERVER_DIR) # Workshop mod folder
 A3_KEYS_DIR = "{}/keys".format(A3_SERVER_DIR)
 WORKSHOP_MODS = {} # Loaded names and ids from workshop, WORKSHOP_MODS[mod_name] = mod_id
 MODS = [] # The list of mod paths to add to launch params
@@ -165,23 +165,32 @@ def check_workshop_mods():
 
 
 def load_mods_from_dir(directory: str, copyKeys: bool): # Loads both local and workshop mods
+    load_mods_paths = ''
     for mod_folder_name in os.listdir(directory):
         mod_folder = os.path.join(directory, mod_folder_name)
         if os.path.isdir(mod_folder):
             debug("Found mod \"{}\"".format(mod_folder_name))
             # Mods use relative paths from the arma install directory
-            MODS.append(mod_folder.replace('{}/'.format(A3_SERVER_DIR), ''))
+            load_mods_paths += " -mod=\"{}\"".format(mod_folder.replace('{}/'.format(A3_SERVER_DIR), ''))
             if copyKeys:
                 copy_mod_keys(mod_folder)
+    return load_mods_paths
 
 
-def load_mods(): # Loads both local and workshop mods
-    if os.path.isdir(A3_STEAM_WORKSHOP_DIR):
-        debug('Loading Workshop mods:')
-        load_mods_from_dir(A3_STEAM_WORKSHOP_DIR, False)
-    if os.path.isdir(A3_LOCAL_MODS_DIR):
-        debug('Loading Local mods:')
-        load_mods_from_dir(A3_LOCAL_MODS_DIR, True)
+def create_mod_symlinks():
+    if os.path.isdir(A3_WORKSHOP_MODS_DIR):
+        shutil.rmtree(A3_WORKSHOP_MODS_DIR)
+        os.makedirs(A3_WORKSHOP_MODS_DIR)
+    for mod_name, mod_id in MODS.items():
+        link_path = "{}/@{}".format(A3_WORKSHOP_MODS_DIR, mod_name)
+        real_path = "{}/{}".format(A3_STEAM_WORKSHOP_DIR, mod_id)
+
+        if os.path.isdir(real_path):
+            if not os.path.islink(link_path):
+                os.symlink(real_path, link_path)
+                print("Creating symlink '{}'...".format(link_path))
+        else:
+            print("Mod '{}' does not exist! ({})".format(mod_name, real_path))
 #endregion
 
 log("Updating A3 server ({})".format(A3_SERVER_ID))
@@ -190,8 +199,8 @@ update_server()
 log("Checking for updates for workshop mods...")
 check_workshop_mods()
 
-log("Creating mod list...")
-load_mods()
+log("Create mod symlinks for steam workshop mods...")
+create_mod_symlinks()
 
 log("Launching Arma3-server...")
 launch = "{} -limitFPS={} -world={}".format(
@@ -199,24 +208,33 @@ launch = "{} -limitFPS={} -world={}".format(
     os.environ["ARMA_LIMITFPS"],
     os.environ["ARMA_WORLD"]
 )
-for mod in MODS:
-    launch += " -mod=\"{}\"".format(mod)
+
+if os.path.isdir(A3_WORKSHOP_MODS_DIR):
+    debug('Loading Workshop mods:')
+    launch += load_mods_from_dir(A3_WORKSHOP_MODS_DIR, False)
+
+if os.path.isdir(A3_LOCAL_MODS_DIR):
+    debug('Loading Local mods:')
+    launch += load_mods_from_dir(A3_LOCAL_MODS_DIR, True)
+
 if env_defined("ARMA_CDLC"):
     for cdlc in os.environ["ARMA_CDLC"].split(";"):
         launch += " -mod={}".format(cdlc)
+
 if env_defined("ARMA_PARAMS"):
     launch += " {}".format(os.environ["ARMA_PARAMS"])
-# If needed, spot for adding headlessclients or localclients
+
+# TODO: add headlessclients and/or localclients
+
 launch += ' -config="/arma3/configs/{}" -port={} -name="{}" -profiles="/arma3/configs/profiles"'.format(
     os.environ["ARMA_CONFIG"],
     os.environ["PORT"],
     os.environ["ARMA_PROFILE"]
 )
+
 if os.path.isdir(A3_SERVER_MODS_DIR):
-    MODS.clear() # Clear already loaded mods
     debug('Loading Server mods:')
-    load_mods_from_dir(A3_SERVER_MODS_DIR, True)
-    for mod in MODS:
-        launch += " -mod=\"{}\"".format(mod)
+    launch += load_mods_from_dir(A3_SERVER_MODS_DIR, True)
+
 print(launch)
 os.system(launch)
