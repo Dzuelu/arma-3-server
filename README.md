@@ -47,7 +47,7 @@ For a smaller storage space, add all the other volumes under `/arma3/` directory
 ### Creator DLC
 
 To use a Creator DLC the `STEAM_BRANCH` must be set to `creatordlc` and
-then set `ARMA_CDLC` environment variable the CDLC class name [found here](https://community.bistudio.com/wiki/Category:Arma_3:_CDLCs)
+then set `ARMA_CDLC` environment variable to the CDLC class name(s) [found here](https://community.bistudio.com/wiki/Category:Arma_3:_CDLCs)
 separated by `;`.
 
 Example: `-e ARMA_CDLC=csla;gm;vn;ws`
@@ -56,7 +56,7 @@ Example: `-e ARMA_CDLC=csla;gm;vn;ws`
 ### Steam workshop mods
 
 The script will check for any workshop mod updates on startup and only download what is out of date.
-Place the mod list html exported by the launcher anywhere in the `/arma3/` directory and add the `WORKSHOP_MODS` environment variable to load.
+Place the mod list html exported by the launcher anywhere in the `/arma3/` directory and add the path to `WORKSHOP_MODS` environment variable to load.
 
 
 ### Helpful projects used
