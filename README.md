@@ -16,7 +16,7 @@ Allows for caching steam, Arma3, and mods install OR downloading any (or all) on
 | ARMA_PROFILE				| N			| main			| Profile name, stored in `/arma3/configs/profiles`
 | ARMA_WORLD				| N			| empty			| World to load on startup
 | FORCE_DOWNLOAD_WORKSHOP	| N			| 0				| Force re-download of workshop mods
-| HEADLESS_CLIENTS			| N			| 0				| TBD: Not implemented yet... (Launch n number of headless clients)
+| HEADLESS_CLIENTS			| N			| 0				| Launch n number of headless clients
 | PORT						| N			| 2302			| Port used by the server, (uses PORT to PORT+3)
 | STEAM_BRANCH				| N			| public		| Steam branch code to download. [See](https://community.bistudio.com/wiki/Arma_3:_Steam_Branches)
 | STEAM_BRANCH_PASSWORD		| N			| 				| Password for Steam branch code
@@ -57,6 +57,16 @@ Example: `-e ARMA_CDLC=csla;gm;vn;ws`
 
 The script will check for any workshop mod updates on startup and only download what is out of date.
 Place the mod list html exported by the launcher anywhere in the `/arma3/` directory and add the path to `WORKSHOP_MODS` environment variable to load.
+
+
+### Headless Clients
+Launch n number of headless clients when `HEADLESS_CLIENTS` environment variable is set.
+Profiles loaded for each headless client will be set to `${ARMA_PROFILE}-hc-${n}`.
+For headless clients to connect, you must also have the following in your config cfg file:
+```
+headlessclients[] = {"127.0.0.1"};
+localclient[] = {"127.0.0.1"};
+```
 
 
 ### Helpful projects used
