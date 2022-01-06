@@ -240,7 +240,7 @@ if headless_client_count > 0:
             'localclient[] = {"127.0.0.1"};'
         ]))
     if "password" in config_values:
-        base_client_launch_config += " -password={}".format(config_values["password"])
+        base_client_launch_config += " -client -connect=127.0.0.1 -password={}".format(config_values["password"])
     for i in range(0, headless_client_count):
         client_config = base_client_launch_config + ' -name="{}-hc-{}"'.format(os.environ["ARMA_PROFILE"], i)
         print(client_config)
