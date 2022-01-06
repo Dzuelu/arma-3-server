@@ -26,6 +26,7 @@ import os
 import os.path
 import re
 import shutil
+import subprocess
 
 from datetime import datetime
 from urllib import request
@@ -243,7 +244,7 @@ if headless_client_count > 0:
     for i in range(0, headless_client_count):
         client_config = base_client_launch_config + ' -name="{}-hc-{}"'.format(os.environ["ARMA_PROFILE"], i)
         print(client_config)
-        os.system(client_config)
+        subprocess.Popen(client_config, shell=True)
 
 launch += ' -port={} -name="{}" -profiles="{}"'.format(
     os.environ["PORT"],
