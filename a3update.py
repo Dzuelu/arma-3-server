@@ -31,7 +31,9 @@ from datetime import datetime
 from urllib import request
 
 #region Configuration
-STEAM_CMD = "/steamcmd/steamcmd.sh"
+STEAM_CMD_DOWNLOAD = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz'
+STEAM_CMD_FOLDER = '/steamcmd'
+STEAM_CMD = "{}/steamcmd.sh".format(STEAM_CMD_FOLDER)
 STEAM_USER = os.environ["STEAM_USERNAME"]
 STEAM_PASS = os.environ["STEAM_PASSWORD"]
 
@@ -44,6 +46,8 @@ A3_LOCAL_MODS_DIR = "{}/mods".format(A3_SERVER_DIR) # Local mod folder
 A3_SERVER_MODS_DIR = "{}/servermods".format(A3_SERVER_DIR) # Server mod folder
 A3_KEYS_DIR = "{}/keys".format(A3_SERVER_DIR)
 WORKSHOP_MODS = {} # Loaded names and ids from workshop, WORKSHOP_MODS[mod_name] = mod_id
+
+CONFIG_KEYS_REGEX = re.compile(r"(.+?)(?:\s+)?=(?:\s+)?(.+?)(?:$|\/|;)", re.MULTILINE)
 
 WORKSHOP_ID_REGEX = re.compile(r"filedetails\/\?id=(\d+)\"", re.MULTILINE)
 LAST_UPDATED_REGEX = re.compile(r"workshopAnnouncement.*?<p id=\"(\d+)\">", re.DOTALL)
@@ -72,6 +76,16 @@ def call_steamcmd(params: str):
     debug('steamcmd {}'.format(params))
     os.system("{} {}".format(STEAM_CMD, params))
     print("")
+
+
+def read_config_values(config_path):
+    config_values = {}
+    with open(config_path) as data:
+        config_data = data.read()
+        matches = re.finditer(CONFIG_KEYS_REGEX, config_data)
+        for _, match in enumerate(matches, start=1):
+            config_values[match.group(1).lower()] = match.group(2)
+    return config_values
 
 
 def update_server():
@@ -178,7 +192,7 @@ def load_mods_from_dir(directory: str, copyKeys: bool, mod_type = 'mod'): # Load
 # Startup checks
 if not os.path.isfile(STEAM_CMD):
     log("Downloading steamcmd...")
-    os.system("wget -qO- 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxf - -C /steamcmd")
+    os.system("wget -qO- '{}' | tar zxf - -C {}".format(STEAM_CMD_DOWNLOAD, STEAM_CMD_FOLDER))
 if os.path.isdir(A3_KEYS_DIR):
     shutil.rmtree(A3_KEYS_DIR)
     os.makedirs(A3_KEYS_DIR)
@@ -190,10 +204,12 @@ log("Checking for updates for workshop mods...")
 check_workshop_mods()
 
 log("Launching Arma3-server...")
-launch = "{} -limitFPS={} -world={}".format(
+config_path = '{}/configs/{}'.format(A3_SERVER_DIR, os.environ["ARMA_CONFIG"])
+launch = '{} -limitFPS={} -world={} -config="{}"'.format(
     os.environ["ARMA_BINARY"],
     os.environ["ARMA_LIMITFPS"],
-    os.environ["ARMA_WORLD"]
+    os.environ["ARMA_WORLD"],
+    config_path
 )
 
 if os.path.isdir(A3_STEAM_WORKSHOP_DIR):
@@ -211,12 +227,28 @@ if env_defined("ARMA_CDLC"):
 if env_defined("ARMA_PARAMS"):
     launch += " {}".format(os.environ["ARMA_PARAMS"])
 
-# TODO: add headlessclients and/or localclients
+headless_client_count = int(os.environ["HEADLESS_CLIENTS"])
+if headless_client_count > 0:
+    base_client_launch_config = launch
+    config_values = read_config_values(config_path)
+    if "headlessclients[]" not in config_values or "localclient[]" not in config_values:
+        raise Exception('\n'.join([
+            'headlessclients or localclient not found in config!',
+            'Be sure to add both of the following to your config file.',
+            'headlessclients[] = {"127.0.0.1"};',
+            'localclient[] = {"127.0.0.1"};'
+        ]))
+    if "password" in config_values:
+        base_client_launch_config += " -password={}".format(config_values["password"])
+    for i in range(0, headless_client_count):
+        client_config = base_client_launch_config + ' -name="{}-hc-{}"'.format(os.environ["ARMA_PROFILE"], i)
+        print(client_config)
+        os.system(client_config)
 
-launch += ' -config="/arma3/configs/{}" -port={} -name="{}" -profiles="/arma3/configs/profiles"'.format(
-    os.environ["ARMA_CONFIG"],
+launch += ' -port={} -name="{}" -profiles="{}"'.format(
     os.environ["PORT"],
-    os.environ["ARMA_PROFILE"]
+    os.environ["ARMA_PROFILE"], # profile name
+    '{}/configs/profiles'.format(A3_SERVER_DIR) # Broken in linux per wiki, required to be this
 )
 
 if os.path.isdir(A3_SERVER_MODS_DIR):
