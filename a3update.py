@@ -162,23 +162,26 @@ def check_workshop_mods():
     debug("Workshop mods loaded\n{}".format(WORKSHOP_MODS))
 
 
-def load_mods_from_dir(directory: str, copyKeys: bool): # Loads both local and workshop mods
+def load_mods_from_dir(directory: str, copyKeys: bool, mod_type = 'mod'): # Loads both local and workshop mods
     load_mods_paths = ''
     for mod_folder_name in os.listdir(directory):
         mod_folder = os.path.join(directory, mod_folder_name)
         if os.path.isdir(mod_folder):
             debug("Found mod \"{}\"".format(mod_folder_name))
             # Mods use relative paths from the arma install directory
-            load_mods_paths += " -mod=\"{}\"".format(mod_folder.replace('{}/'.format(A3_SERVER_DIR), ''))
+            load_mods_paths += " -{}=\"{}\"".format(mod_type, mod_folder.replace('{}/'.format(A3_SERVER_DIR), ''))
             if copyKeys:
                 copy_mod_keys(mod_folder)
     return load_mods_paths
 #endregion
 
-# Startup check
+# Startup checks
 if not os.path.isfile(STEAM_CMD):
     log("Downloading steamcmd...")
     os.system("wget -qO- 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxf - -C /steamcmd")
+if os.path.isdir(A3_KEYS_DIR):
+    shutil.rmtree(A3_KEYS_DIR)
+    os.makedirs(A3_KEYS_DIR)
 
 log("Updating A3 server ({})".format(A3_SERVER_ID))
 update_server()
@@ -218,7 +221,7 @@ launch += ' -config="/arma3/configs/{}" -port={} -name="{}" -profiles="/arma3/co
 
 if os.path.isdir(A3_SERVER_MODS_DIR):
     debug('Loading Server mods:')
-    launch += load_mods_from_dir(A3_SERVER_MODS_DIR, True)
+    launch += load_mods_from_dir(A3_SERVER_MODS_DIR, True, 'servermod')
 
 print(launch)
 os.system(launch)
