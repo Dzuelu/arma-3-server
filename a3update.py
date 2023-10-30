@@ -86,7 +86,7 @@ def call_steamcmd(params: str):
     steam_cmd_params = " +force_install_dir {}".format(A3_SERVER_DIR)
     if STEAM_API_KEY != "":
         steam_cmd_params += " +sv_setsteamaccount {}".format(STEAM_API_KEY)
-    else if STEAM_USER != "" and STEAM_PASS != "":
+    elif STEAM_USER != "" and STEAM_PASS != "":
         steam_cmd_params += " +login {} {}".format(STEAM_USER, STEAM_PASS)
     else:
         raise Exception("Unable to login to steam with given params!")
