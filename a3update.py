@@ -53,6 +53,7 @@ A3_LOCAL_MODS_DIR = "{}/mods".format(A3_SERVER_DIR) # Local mod folder
 A3_SERVER_MODS_DIR = "{}/servermods".format(A3_SERVER_DIR) # Server mod folder
 A3_KEYS_DIR = "{}/keys".format(A3_SERVER_DIR)
 WORKSHOP_MODS = {} # Loaded names and ids from workshop, WORKSHOP_MODS[mod_name] = mod_id
+WORKSHOP_UPDATE_MODS = [] # List of workshop mod ids that need a update
 
 CONFIG_KEYS_REGEX = re.compile(r"(.+?)(?:\s+)?=(?:\s+)?(.+?)(?:$|\/|;)", re.MULTILINE)
 
@@ -120,19 +121,6 @@ def copy_mod_keys(mod_directory: str):
         print("Missing keys:", mod_keys_directory)
 
 
-def download_workshop_mod(mod_id: str):
-    steam_cmd_params  = " +login {} {}".format(STEAM_USER, STEAM_PASS)
-    steam_cmd_params += " +force_install_dir {}".format(A3_SERVER_DIR)
-    steam_cmd_params += " +workshop_download_item {} {}".format(
-        A3_WORKSHOP_ID,
-        mod_id
-    )
-    if os.environ["STEAM_VALIDATE"] == '1':
-        steam_cmd_params += " validate"
-    steam_cmd_params += " +quit"
-    call_steamcmd(steam_cmd_params)
-
-
 def lowercase_workshop_dir(path: str):
     os.system("(cd {} && find . -depth -exec rename -v 's/(.*)\/([^\/]*)/$1\/\L$2/' {{}} \;)".format(path))
 
@@ -148,16 +136,40 @@ def check_workshop_mod(mod_id: str):
         updated_at = datetime.fromtimestamp(int(mod_last_updated.group(1)))
         created_at = datetime.fromtimestamp(os.path.getctime(path))
         if (updated_at >= created_at or os.environ["FORCE_DOWNLOAD_WORKSHOP"] == '1'):
+            # Delete mod directory for re download
             shutil.rmtree(path)
     
     if not os.path.isdir(path):
-        print("Updating \"{}\" ({})".format(mod_name, mod_id))
-        download_workshop_mod(mod_id)
-        lowercase_workshop_dir(path)
+        print("Update required for \"{}\" ({})".format(mod_name, mod_id))
+        WORKSHOP_UPDATE_MODS.append(mod_id)
     else:
         print("No update required for \"{}\" ({})... SKIPPING".format(mod_name, mod_id))
     # Copy keys here so it's easier to see the workshop mod that has missing keys
     copy_mod_keys(path)
+
+
+# builds the steam cli command to download multiple workshop mods at once and fixes the file paths after
+def download_updated_workshop_mods():
+    if len(WORKSHOP_UPDATE_MODS) == 0:
+        debug("No workshop mods needed to be downloaded!")
+        return
+    debug("Starting download of updated workshop mods...")
+    steam_cmd_params  = " +login {} {}".format(STEAM_USER, STEAM_PASS)
+    steam_cmd_params += " +force_install_dir {}".format(A3_SERVER_DIR)
+    for mod_id in WORKSHOP_UPDATE_MODS:
+        steam_cmd_params += " +workshop_download_item {} {}".format(
+            A3_WORKSHOP_ID,
+            mod_id
+        )
+    if os.environ["STEAM_VALIDATE"] == '1':
+        steam_cmd_params += " validate"
+    steam_cmd_params += " +quit"
+    call_steamcmd(steam_cmd_params)
+    # Fix paths to lowercase after downloading
+    debug("Fixing any filepaths of workshop mods...")
+    for mod_id in WORKSHOP_UPDATE_MODS:
+        path = "{}/{}".format(A3_STEAM_WORKSHOP_DIR, mod_id)
+        lowercase_workshop_dir(path)
 
 
 def check_workshop_mods():
@@ -180,7 +192,8 @@ def check_workshop_mods():
         for _, match in enumerate(matches, start=1):
             mod_id = match.group(1)
             check_workshop_mod(mod_id)
-    debug("Workshop mods loaded\n{}".format(WORKSHOP_MODS))
+    download_updated_workshop_mods()
+    debug("Workshop mods ready\n{}".format(WORKSHOP_MODS))
 
 
 def load_mods_from_dir(directory: str, copyKeys: bool, mod_type = 'mod'): # Loads both local and workshop mods
