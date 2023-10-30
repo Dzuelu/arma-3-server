@@ -31,6 +31,12 @@ import subprocess
 from datetime import datetime
 from urllib import request
 
+print('*---- Environment Keys ----*')
+# Print all environment variables.
+print(os.environ)
+print('*--------------------------*')
+
+
 #region Configuration
 STEAM_CMD_DOWNLOAD = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz'
 STEAM_CMD_FOLDER = '/steamcmd'
