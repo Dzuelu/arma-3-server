@@ -34,6 +34,12 @@ from urllib import request
 def env_defined(key: str):
     return key in os.environ and len(os.environ[key]) > 0
 
+def envOrDefault(key: str, default = ''):
+    if env_defined(key):
+        return os.environ[key]
+    else:
+        return default
+
 def debug(message: str):
     if env_defined('DEBUG') and os.environ['DEBUG'] == '1':
         print(message)
@@ -42,12 +48,13 @@ def debug(message: str):
 debug(os.environ)
 
 
-#region Configuration
+# Load ENV Configuration
 STEAM_CMD_DOWNLOAD = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz'
 STEAM_CMD_FOLDER = '/steamcmd'
 STEAM_CMD = "{}/steamcmd.sh".format(STEAM_CMD_FOLDER)
-STEAM_USER = os.environ["STEAM_USERNAME"]
-STEAM_PASS = os.environ["STEAM_PASSWORD"]
+STEAM_USER = envOrDefault("STEAM_USERNAME")
+STEAM_PASS = envOrDefault("STEAM_PASSWORD")
+STEAM_API_KEY = envOrDefault("STEAM_API_KEY")
 
 A3_SERVER_DIR = "/arma3"
 A3_SERVER_ID = "233780"
@@ -66,7 +73,6 @@ WORKSHOP_ID_REGEX = re.compile(r"filedetails\/\?id=(\d+)\"", re.MULTILINE)
 LAST_UPDATED_REGEX = re.compile(r"workshopAnnouncement.*?<p id=\"(\d+)\">", re.DOTALL)
 MOD_NAME_REGEX = re.compile(r"workshopItemTitle\">(.*?)<\/div", re.DOTALL)
 WORKSHOP_CHANGELOG_URL = "https://steamcommunity.com/sharedfiles/filedetails/changelog"
-#endregion
 
 
 def log(msg: str):
@@ -77,8 +83,16 @@ def log(msg: str):
 
 
 def call_steamcmd(params: str):
-    debug('steamcmd {}'.format(params))
-    os.system("{} {}".format(STEAM_CMD, params))
+    steam_cmd_params = " +force_install_dir {}".format(A3_SERVER_DIR)
+    if STEAM_API_KEY != "":
+        steam_cmd_params += " +sv_setsteamaccount {}".format(STEAM_API_KEY)
+    else if STEAM_USER != "" and STEAM_PASS != "":
+        steam_cmd_params += " +login {} {}".format(STEAM_USER, STEAM_PASS)
+    else:
+        raise Exception("Unable to login to steam with given params!")
+    steam_cmd_params += params
+    debug('steamcmd {}'.format(steam_cmd_params))
+    os.system("{} {}".format(STEAM_CMD, steam_cmd_params))
     print("")
 
 
@@ -93,9 +107,7 @@ def read_config_values(config_path):
 
 
 def update_server():
-    steam_cmd_params = " +force_install_dir {}".format(A3_SERVER_DIR)
-    steam_cmd_params += " +login {} {}".format(STEAM_USER, STEAM_PASS)
-    steam_cmd_params += " +app_update {}".format(A3_SERVER_ID)
+    steam_cmd_params = " +app_update {}".format(A3_SERVER_ID)
     if env_defined("STEAM_BRANCH"):
         steam_cmd_params += " -beta {}".format(os.environ["STEAM_BRANCH"])
     if env_defined("STEAM_BRANCH_PASSWORD"):
@@ -150,8 +162,7 @@ def download_updated_workshop_mods():
         debug("No workshop mods needed to be downloaded!")
         return
     debug("Starting download of updated workshop mods...")
-    steam_cmd_params = " +force_install_dir {}".format(A3_SERVER_DIR)
-    steam_cmd_params += " +login {} {}".format(STEAM_USER, STEAM_PASS)
+    steam_cmd_params = ""
     for mod_id in WORKSHOP_UPDATE_MODS:
         steam_cmd_params += " +workshop_download_item {} {}".format(
             A3_WORKSHOP_ID,
@@ -203,7 +214,7 @@ def load_mods_from_dir(directory: str, copyKeys: bool, mod_type = 'mod'): # Load
             if copyKeys:
                 copy_mod_keys(mod_folder)
     return load_mods_paths
-#endregion
+
 
 # Startup checks
 if not os.path.isfile(STEAM_CMD):
