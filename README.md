@@ -1,6 +1,5 @@
 # Docker Arma3 Server
-
-A KISS Arma3 Dedicated Server that can update Arma3 and mods.
+An Arma3 Dedicated Server that can update Arma3 and mods on startup.
 Allows for caching steam, Arma3, and mods install OR downloading any (or all) on startup.
 
 
@@ -20,21 +19,23 @@ Allows for caching steam, Arma3, and mods install OR downloading any (or all) on
 | PORT                    | N        | 2302          | Port used by the server, (uses PORT to PORT+3)
 | STEAM_BRANCH            | N        | public        | Steam branch code to download. [See](https://community.bistudio.com/wiki/Arma_3:_Steam_Branches)
 | STEAM_BRANCH_PASSWORD   | N        |               | Password for Steam branch code
-| STEAM_API_KEY           | Y/N      |               | Uses your [steam managed game server api key](https://steamcommunity.com/dev/managegameservers). Replaces user/pass requirement.
-| STEAM_PASSWORD          | Y/N      |               | Steam user password
-| STEAM_USERNAME          | Y/N      |               | Steam user used to login to steamcmd. Must own Arma3 and can't be used on multiple instances.
+| STEAM_PASSWORD          | Y        |               | Steam user password
+| STEAM_USERNAME          | Y        |               | Steam user used to login to steamcmd
 | STEAM_VALIDATE          | N        | 1             | Validates files after Steam download
 | WORKSHOP_MODS           | N        |               | URL or file path to load mods
 
+The Steam account needs to own Arma3 to be able to download Steam workshop mods.
+TODO: Look into and possibly use instead [steam managegameservers](https://steamcommunity.com/dev/managegameservers).
 
-### Important directories
+
+### Docker directory parameters
 | Directory                                | Description
 | ---                                      | ---
 | /steamcmd                                | Steam cmd executable (not steam install)
 | /arma3                                   | Entire Steam install, Arma3 server install, and workshop mods
 | /arma3/mpmissions                        | 
 | /arma3/configs                           | 
-| /arma3/mods                              | Non workshop mods
+| /arma3/mods                              | 
 | /arma3/servermods                        | Server only mods
 | /arma3/steamapps/workshop/content/107410 | Steam workshop mods
 
