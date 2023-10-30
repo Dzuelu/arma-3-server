@@ -7,7 +7,7 @@ services:
     network_mode: host
     volumes:
       # I've created a folder called shared that I use to contain all of my data
-      # Cache the steamcmd. Not required but if you don't you will need to download this each time
+      # Cache the steamcmd. Not required but if you do you will need to download this before
       - '/shared/arma3/cache:/steamcmd'
 
       # Cache entire arma 3 install (contains steam install, arma3 server, and mods)
@@ -22,13 +22,9 @@ services:
       # Add exported mods list to base arma3 directory
       # - '/shared/arma3/mods.html:/arma3/mods.html'
     environment:
-      - ARMA_BINARY=./arma3server_x64
-      - ARMA_CDLC=ws
-      - ARMA_PARAMS='-cfg="/arma3/configs/basic.cfg"'
-      - DEBUG=1
-      - STEAM_BRANCH=creatordlc
-      - STEAM_PASSWORD=$STEAM_PASSWORD
-      - STEAM_USERNAME=$STEAM_USERNAME
-      - STEAM_VALIDATE=1
       - WORKSHOP_MODS=mods.html
-    restart: on-failure:3
+      - ARMA_CDLC=gm;ws
+      - STEAM_BRANCH=creatordlc
+      - STEAM_USERNAME=*********************
+      - STEAM_PASSWORD=*********************
+    restart: unless-stopped
