@@ -25,6 +25,7 @@ Allows for caching steam, Arma3, and mods install OR downloading any (or all) on
 | WORKSHOP_MODS           | N        |               | URL or file path to load mods
 
 The Steam account needs to own Arma3 to be able to download Steam workshop mods.
+TODO: Look into and possibly use instead [steam managegameservers](https://steamcommunity.com/dev/managegameservers).
 
 
 ### Docker directory parameters
