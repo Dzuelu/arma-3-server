@@ -97,8 +97,8 @@ def read_config_values(config_path):
 
 
 def update_server():
-    steam_cmd_params  = " +login {} {}".format(STEAM_USER, STEAM_PASS)
-    steam_cmd_params += " +force_install_dir {}".format(A3_SERVER_DIR)
+    steam_cmd_params = " +force_install_dir {}".format(A3_SERVER_DIR)
+    steam_cmd_params += " +login {} {}".format(STEAM_USER, STEAM_PASS)
     steam_cmd_params += " +app_update {}".format(A3_SERVER_ID)
     if env_defined("STEAM_BRANCH"):
         steam_cmd_params += " -beta {}".format(os.environ["STEAM_BRANCH"])
@@ -154,8 +154,8 @@ def download_updated_workshop_mods():
         debug("No workshop mods needed to be downloaded!")
         return
     debug("Starting download of updated workshop mods...")
-    steam_cmd_params  = " +login {} {}".format(STEAM_USER, STEAM_PASS)
-    steam_cmd_params += " +force_install_dir {}".format(A3_SERVER_DIR)
+    steam_cmd_params = " +force_install_dir {}".format(A3_SERVER_DIR)
+    steam_cmd_params += " +login {} {}".format(STEAM_USER, STEAM_PASS)
     for mod_id in WORKSHOP_UPDATE_MODS:
         steam_cmd_params += " +workshop_download_item {} {}".format(
             A3_WORKSHOP_ID,
