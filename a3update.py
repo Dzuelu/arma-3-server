@@ -31,10 +31,15 @@ import subprocess
 from datetime import datetime
 from urllib import request
 
-print('*---- Environment Keys ----*')
+def env_defined(key: str):
+    return key in os.environ and len(os.environ[key]) > 0
+
+def debug(message: str):
+    if env_defined('DEBUG') and os.environ['DEBUG'] == '1':
+        print(message)
+
 # Print all environment variables.
-print(os.environ)
-print('*--------------------------*')
+debug(os.environ)
 
 
 #region Configuration
@@ -63,21 +68,12 @@ MOD_NAME_REGEX = re.compile(r"workshopItemTitle\">(.*?)<\/div", re.DOTALL)
 WORKSHOP_CHANGELOG_URL = "https://steamcommunity.com/sharedfiles/filedetails/changelog"
 #endregion
 
-#region Functions
-def env_defined(key: str):
-    return key in os.environ and len(os.environ[key]) > 0
-
 
 def log(msg: str):
     print("")
     print("{{0:=<{}}}".format(len(msg)).format(""))
     print(msg)
     print("{{0:=<{}}}".format(len(msg)).format(""))
-
-
-def debug(message: str):
-    if env_defined('DEBUG') and os.environ['DEBUG'] == '1':
-        print(message)
 
 
 def call_steamcmd(params: str):
