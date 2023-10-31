@@ -1,34 +1,32 @@
 # Docker Arma3 Server
-An Arma3 Dedicated Server that can update Arma3 and mods on startup.
-Allows for caching steam, Arma3, and mods install OR downloading any (or all) on startup.
+
+A simple Arma3 Dedicated Server that can update Arma3 and workshop mods.
+Allows for caching steam, Arma3, and workshop mods install OR downloading any (or all) on startup.
 
 
 ### Docker environment parameters
 | Parameter               | Required | Default       | Description
 | ---                     | ---      | ---           | ---
 | ARMA_BINARY             | N        | ./arma3server | Arma 3 server binary to use, `./arma3server_x64` for x64
-| ARMA_CDLC               | N        |               | Creator DLC to load. [See](#creator-dlc)
+| ARMA_CDLC               | N        |               | Creator DLC to load. [See creator-dlc](#creator-dlc)
 | ARMA_CONFIG             | N        | main.cfg      | Config file to load from `/arma3/configs`
 | ARMA_LIMITFPS           | N        | 1000          | Maximum server FPS
 | ARMA_PARAMS             | N        |               | Extra parameters given to server and any headless clients
 | ARMA_PROFILE            | N        | main          | Profile name, stored in `/arma3/configs/profiles`
 | ARMA_WORLD              | N        | empty         | World to load on startup
 | DEBUG                   | N        | 0             | Output debug messages including commands run
-| FORCE_DOWNLOAD_WORKSHOP | N        | 0             | Force re-download of workshop mods
+| FORCE_DOWNLOAD_WORKSHOP | N        | 0             | Force re-download of all workshop mods
 | HEADLESS_CLIENTS        | N        | 0             | Launch n number of headless clients
 | PORT                    | N        | 2302          | Port used by the server, (uses PORT to PORT+3)
-| STEAM_BRANCH            | N        | public        | Steam branch code to download. [See](https://community.bistudio.com/wiki/Arma_3:_Steam_Branches)
+| STEAM_BRANCH            | N        | public        | Steam branch code to download. [See wiki](https://community.bistudio.com/wiki/Arma_3:_Steam_Branches)
 | STEAM_BRANCH_PASSWORD   | N        |               | Password for Steam branch code
 | STEAM_PASSWORD          | Y        |               | Steam user password
-| STEAM_USERNAME          | Y        |               | Steam user used to login to steamcmd
+| STEAM_USERNAME          | Y        |               | Steam user used to login to steamcmd, must own Arma3.
 | STEAM_VALIDATE          | N        | 1             | Validates files after Steam download
 | WORKSHOP_MODS           | N        |               | URL or file path to load mods
 
-The Steam account needs to own Arma3 to be able to download Steam workshop mods.
-TODO: Look into and possibly use instead [steam managegameservers](https://steamcommunity.com/dev/managegameservers).
 
-
-### Docker directory parameters
+### Directories used
 | Directory                                | Description
 | ---                                      | ---
 | /steamcmd                                | Steam cmd executable (not steam install)
@@ -45,7 +43,7 @@ For a smaller storage space, add all the other volumes under `/arma3/` directory
 
 ### Creator DLC
 To use a Creator DLC the `STEAM_BRANCH` must be set to `creatordlc` and
-then set `ARMA_CDLC` environment variable to the CDLC class name(s) [found here](https://community.bistudio.com/wiki/Category:Arma_3:_CDLCs)
+then set `ARMA_CDLC` environment variable to the CDLC class name(s) [found in wiki](https://community.bistudio.com/wiki/Category:Arma_3:_CDLCs)
 separated by `;`.
 
 Example: `-e ARMA_CDLC=csla;gm;vn;ws`
@@ -53,8 +51,9 @@ Example: `-e ARMA_CDLC=csla;gm;vn;ws`
 
 ### Steam workshop mods
 The script will check for any workshop mod updates on startup and only download what is out of date.
-Place the mod list html exported by the launcher anywhere in the `/arma3/` directory and add the path to `WORKSHOP_MODS` environment variable to load.
-
+Place the mod list html exported by the launcher anywhere in the `/arma3/` directory and add the path to
+`WORKSHOP_MODS` environment variable to load.
+The script will also to lowercase the workshop mod file paths as arma3 paths need to be case sensitive.
 
 ### Headless Clients
 Launch n number of headless clients when `HEADLESS_CLIENTS` environment variable is set.
