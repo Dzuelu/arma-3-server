@@ -14,6 +14,7 @@ RUN apt-get update \
         python3 \
         rename \
         wget \
+        git \
     && \
     apt-get remove --purge -y \
     && \
@@ -47,6 +48,9 @@ ENV STEAM_PASSWORD=
 ENV STEAM_USERNAME=
 ENV STEAM_VALIDATE=1
 ENV WORKSHOP_MODS=
+
+ENV CHECK_MODS=1
+ENV DOWNLOAD_ATTEMPTS=2
 
 EXPOSE 2302/udp
 EXPOSE 2303/udp
